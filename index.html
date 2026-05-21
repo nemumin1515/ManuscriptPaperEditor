@@ -1,0 +1,397 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  .app { padding: 1rem 0; font-family: var(--font-sans); }
+  .controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 1rem; }
+  .ctrl-group { display: flex; flex-direction: column; gap: 4px; }
+  .ctrl-group label { font-size: 12px; color: var(--color-text-secondary); }
+  .section-label { font-size: 11px; font-weight: 500; color: var(--color-text-tertiary); grid-column: 1/-1; margin-top: 6px; }
+  .textarea-wrap { width: 90%; margin: 0 auto 1.2rem; background: var(--color-background-primary); border: 2px solid #1a56db; border-radius: 10px; padding: 14px 16px 10px; box-shadow: 0 2px 10px rgba(26,86,219,0.10); transition: box-shadow 0.2s, border-color 0.2s; }
+  .textarea-wrap:focus-within { border-color: #1240a8; box-shadow: 0 3px 16px rgba(26,86,219,0.22); }
+  .textarea-wrap label { font-size: 12px; font-weight: 600; color: #1a56db; display: block; margin-bottom: 6px; letter-spacing: 0.04em; }
+  textarea { width: 100%; height: 90px; font-size: 14px; padding: 6px 4px; border: none; border-top: 1px dashed #b8ccf5; border-radius: 0; background: transparent; color: var(--color-text-primary); resize: vertical; font-family: var(--font-sans); line-height: 1.8; outline: none; }
+  .btn-row { display: flex; gap: 8px; margin-bottom: 0.5rem; flex-wrap: wrap; align-items: center; }
+  button { padding: 6px 16px; font-size: 13px; border: 1px solid var(--color-border-primary); border-radius: var(--border-radius-md); background: var(--color-background-primary); color: var(--color-text-primary); cursor: pointer; }
+  button:hover { background: var(--color-background-secondary); }
+  button.primary { background: var(--color-background-info); color: var(--color-text-info); border: 1px solid var(--color-border-info); }
+  button.active-btn { background: var(--color-background-info); color: var(--color-text-info); border: 1px solid var(--color-border-info); }
+  button.btn-preview { background: #1a56db; color: #fff; border: none; border-radius: var(--border-radius-md); padding: 8px 22px; font-size: 14px; font-weight: 600; letter-spacing: 0.03em; box-shadow: 0 2px 6px rgba(26,86,219,0.35); transition: background 0.15s, box-shadow 0.15s; }
+  button.btn-preview:hover { background: #1648c0; box-shadow: 0 3px 10px rgba(26,86,219,0.45); }
+  button.btn-preview:active { background: #1240a8; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); }
+  button.btn-print { background: #fff; color: #1a56db; border: 2px solid #1a56db; border-radius: var(--border-radius-md); padding: 8px 22px; font-size: 14px; font-weight: 600; letter-spacing: 0.03em; transition: background 0.15s, color 0.15s; }
+  button.btn-print:hover { background: #eef2fd; }
+  button.btn-print:active { background: #dce6fb; }
+  .info { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 6px; min-height: 16px; }
+  .warn { font-size: 12px; color: var(--color-text-danger); margin-bottom: 4px; min-height: 16px; }
+  .auto-info { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 10px 14px; margin-bottom: 10px; font-size: 12px; color: var(--color-text-secondary); line-height: 2; }
+  .auto-info strong { color: var(--color-text-primary); font-weight: 500; }
+  .auto-info .adjusted { color: var(--color-text-info); font-weight: 500; }
+  .auto-info .over { color: var(--color-text-danger); font-weight: 500; }
+  .preview-label { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 6px; }
+  .preview-scroll { overflow-x: auto; border: 1px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); background: #f5f5f5; padding: 8px; }
+  .paper-toggle { display: flex; gap: 0; border: 1px solid var(--color-border-primary); border-radius: var(--border-radius-md); overflow: hidden; width: fit-content; }
+  .paper-toggle button { border: none; border-right: 1px solid var(--color-border-primary); border-radius: 0; margin: 0; padding: 6px 20px; font-size: 13px; }
+  .paper-toggle button:last-child { border-right: none; }
+  .paper-toggle button.active { background: #1a56db; color: #fff; font-weight: 600; box-shadow: inset 0 2px 4px rgba(0,0,0,0.18); }
+  .paper-toggle button:not(.active):hover { background: var(--color-background-secondary); }
+  .color-toggle { display: flex; gap: 0; border: 1px solid var(--color-border-primary); border-radius: var(--border-radius-md); overflow: hidden; width: fit-content; }
+  .color-toggle button { border: none; border-right: 1px solid var(--color-border-primary); border-radius: 0; margin: 0; padding: 6px 20px; font-size: 13px; display: flex; align-items: center; gap: 6px; }
+  .color-toggle button:last-child { border-right: none; }
+  .color-toggle button.active { background: #1a56db; color: #fff; font-weight: 600; box-shadow: inset 0 2px 4px rgba(0,0,0,0.18); }
+  .color-toggle button.active .swatch { border-color: rgba(255,255,255,0.5); }
+  .color-toggle button:not(.active):hover { background: var(--color-background-secondary); }
+  .swatch { display: inline-block; width: 12px; height: 12px; border-radius: 2px; border: 1px solid #aaa; flex-shrink: 0; }
+  .punctuation { position: absolute; right: 0; top: 0; width: 50%; height: 50%; display: flex; align-items: center; justify-content: center; }
+  .bracket-open  { display: inline-block; transform: rotate(90deg); transform-origin: center center; }
+  .bracket-close { display: inline-block; transform: rotate(90deg); transform-origin: center center; }
+  .yakumono      { display: inline-block; transform: rotate(90deg); transform-origin: center center; }
+</style>
+
+<div class="app">
+  <h2 class="sr-only">原稿用紙エディタ</h2>
+  <div class="textarea-wrap">
+    <label>文章を入力</label>
+    <textarea id="text" inputmode="text" lang="ja"></textarea>
+  </div>
+  <div class="controls">
+    <div class="section-label">用紙サイズ（横向き）</div>
+    <div class="ctrl-group" style="grid-column:1/-1;">
+      <div class="paper-toggle">
+        <button id="btn-a4" class="active" onclick="setPaper('a4')">A4 横（297×210mm）</button>
+        <button id="btn-b4" onclick="setPaper('b4')">B4 横（364×257mm）</button>
+      </div>
+    </div>
+    <div class="section-label">罫線の色</div>
+    <div class="ctrl-group" style="grid-column:1/-1;">
+      <div class="color-toggle">
+        <button id="btn-color-gold" class="active" onclick="setLineColor('gold')">
+          <span class="swatch" style="background:#b08a45;"></span>デフォルト
+        </button>
+        <button id="btn-color-white" onclick="setLineColor('white')">
+          <span class="swatch" style="background:#ffffff;"></span>白（印刷されない）
+        </button>
+      </div>
+    </div>
+    <div class="section-label">余白（固定・1mm単位）</div>
+    <div class="ctrl-group">
+      <label>上余白 (mm) <span id="v-top">23</span></label>
+      <input type="range" id="top" min="0" max="40" value="23" step="1.5">
+    </div>
+    <div class="ctrl-group">
+      <label>下余白 (mm) <span id="v-bottom">25</span></label>
+      <input type="range" id="bottom" min="0" max="40" value="25" step="1.5">
+    </div>
+    <div class="ctrl-group">
+      <label>右余白 (mm) <span id="v-right">30</span></label>
+      <input type="range" id="right" min="0" max="40" value="30" step="1.5">
+    </div>
+    <div class="ctrl-group">
+      <label>左余白 (mm) <span id="v-left">28</span></label>
+      <input type="range" id="left" min="0" max="40" value="28" step="1.5">
+    </div>
+    <div class="section-label">余白列（1mm単位・基本余白列は自動補正）</div>
+    <div class="ctrl-group">
+      <label>端余白列 (mm) <span id="v-edge">2</span></label>
+      <input type="range" id="edge" min="0" max="10" value="2" step="1.2">
+    </div>
+    <div class="ctrl-group">
+      <label>基本余白列 基準値 (mm) <span id="v-side">4</span></label>
+      <input type="range" id="side" min="0" max="10" value="4" step="1.2">
+    </div>
+    <div class="ctrl-group">
+      <label>中央余白列 (mm) <span id="v-center">4</span></label>
+      <input type="range" id="center" min="0" max="10" value="4" step="1.2">
+    </div>
+  </div>
+  <div class="warn" id="warn"></div>
+  <div class="auto-info" id="auto-info"></div>
+  <div class="btn-row">
+    <button class="btn-preview" onclick="buildPreview()">🔄 プレビュー更新</button>
+    <button class="btn-print" onclick="doPrint()">🖨️ 印刷</button>
+  </div>
+  <div class="info" id="info"></div>
+  <div class="preview-label">プレビュー</div>
+  <div class="preview-scroll" id="preview"></div>
+</div>
+
+<script>
+const PAPER = { b4:{w:364,h:257,label:'B4横(364×257mm)'}, a4:{w:297,h:210,label:'A4横(297×210mm)'} };
+let currentPaper = 'a4';
+// 罫線色: 'gold'=デフォルト色, 'white'=白（印刷で不可視）
+let lineColorMode = 'gold';
+const LINE_COLORS = { gold: '#b08a45', white: '#ffffff' };
+
+const ROWS=20, COLS_PER_SIDE=10, TOTAL_COLS=20;
+const SIDE_TOLERANCE=0.3;
+const SIDE_COUNT=(COLS_PER_SIDE-1)*2;
+
+const BRACKET_OPEN  = new Set([...'「『（【〔［〈《']);
+const BRACKET_CLOSE = new Set([...'」』）】〕］〉》']);
+const ROTATE_PLAIN  = new Set([...'ー―〜']);
+const YAKUMONO      = new Set([...'…']);
+const PUNCTUATION   = new Set([...'、。']);
+const KINSOKU       = new Set([...'、。」』）】〕］〉》…']);
+
+function charClass(ch) {
+  if (BRACKET_OPEN.has(ch))  return 'bracket-open';
+  if (BRACKET_CLOSE.has(ch)) return 'bracket-close';
+  if (YAKUMONO.has(ch))      return 'yakumono';
+  if (PUNCTUATION.has(ch))   return 'punctuation';
+  if (ROTATE_PLAIN.has(ch))  return 'rotate-plain';
+  return null;
+}
+
+function setPaper(key) {
+  currentPaper=key;
+  document.getElementById('btn-b4').classList.toggle('active',key==='b4');
+  document.getElementById('btn-a4').classList.toggle('active',key==='a4');
+  updateAuto();
+}
+
+function setLineColor(mode) {
+  lineColorMode = mode;
+  document.getElementById('btn-color-gold').classList.toggle('active', mode==='gold');
+  document.getElementById('btn-color-white').classList.toggle('active', mode==='white');
+  buildPreview();
+}
+
+['top','bottom','right','left','edge','side','center'].forEach(id=>{
+  document.getElementById(id).addEventListener('input',function(){
+    document.getElementById('v-'+id).textContent=parseInt(this.value);
+    updateAuto();
+  });
+});
+
+function getVals() {
+  return {
+    top:    parseInt(document.getElementById('top').value),
+    bottom: parseInt(document.getElementById('bottom').value),
+    right:  parseInt(document.getElementById('right').value),
+    left:   parseInt(document.getElementById('left').value),
+    edge:   parseInt(document.getElementById('edge').value),
+    side:   parseInt(document.getElementById('side').value),
+    center: parseInt(document.getElementById('center').value),
+  };
+}
+
+function calcAuto(v,p) {
+  const cell=(p.h-v.top-v.bottom)/ROWS;
+  const font=cell*0.72;
+  const gridH=p.h-v.top-v.bottom;
+  const availW=p.w-v.left-v.right;
+  const sideAdj=(availW-v.edge*2-cell*TOTAL_COLS-v.center)/SIDE_COUNT;
+  const delta=sideAdj-v.side;
+  const gridW=availW;
+  return {cell,font,gridH,gridW,availW,sideAdj,delta};
+}
+
+function updateAuto() {
+  const v=getVals(),p=PAPER[currentPaper];
+  const {cell,font,gridH,gridW,availW,sideAdj,delta}=calcAuto(v,p);
+  const warnings=[];
+  if(cell<=0) warnings.push('上余白＋下余白が用紙高さを超えています');
+  if(sideAdj<0) warnings.push('余白列の合計が大きすぎます');
+  const absDelta=Math.abs(delta);
+  let sideLabel;
+  if(absDelta<=SIDE_TOLERANCE){
+    sideLabel=`<span class="adjusted">${sideAdj.toFixed(3)}mm（基準${v.side}mm から ${delta>=0?'+':''}${delta.toFixed(3)}mm 補正 ✓）</span>`;
+  } else {
+    warnings.push(`基本余白列の補正量 ${delta>=0?'+':''}${delta.toFixed(2)}mm が ±${SIDE_TOLERANCE}mm を超えています`);
+    sideLabel=`<span class="over">${sideAdj.toFixed(3)}mm（補正量 ${delta>=0?'+':''}${delta.toFixed(3)}mm ⚠）</span>`;
+  }
+  document.getElementById('warn').textContent=warnings.join('　');
+  document.getElementById('auto-info').innerHTML=
+    `<strong>自動計算結果</strong><br>`+
+    `マスのサイズ: <strong>${cell.toFixed(3)}mm</strong>　文字サイズ: <strong>${font.toFixed(3)}mm</strong><br>`+
+    `利用可能幅: <strong>${availW.toFixed(1)}mm</strong>　グリッド幅: <strong>${gridW.toFixed(1)}mm</strong><br>`+
+    `基本余白列（補正後）: ${sideLabel}`;
+}
+
+function textToPages(text) {
+  const ZS='　'; // 全角スペース
+  const pages=[]; let pageCols=[];
+  function pushCol(col){pageCols.push(col);if(pageCols.length===TOTAL_COLS){pages.push(pageCols);pageCols=[];}}
+  const src=[...text]; let i=0;
+  while(i<src.length){
+    const colChars=[]; let hitNewline=false;
+    while(colChars.length<ROWS&&i<src.length){
+      if(src[i]==='\n'){i++;hitNewline=true;break;}
+      colChars.push(src[i]);i++;
+    }
+    const hangChars=[];
+    if(!hitNewline&&colChars.length===ROWS){
+      while(i<src.length&&src[i]!=='\n'&&KINSOKU.has(src[i])&&hangChars.length<2){hangChars.push(src[i]);i++;}
+      // 列が20文字ぴったりで埋まった直後に改行が来る場合、
+      // 次のループで「\nだけ読んで空列を生成」しないよう改行をスキップする。
+      // hangCharsの有無に関係なく適用。
+      if(i<src.length&&src[i]==='\n'){
+        i++; // \n をスキップ
+      }
+    }
+    const chars=new Array(ROWS).fill('');
+    colChars.forEach((c,idx)=>{chars[idx]=c;});
+    pushCol({chars,hangChars});
+  }
+  if(pageCols.length>0)pages.push(pageCols);
+  return pages;
+}
+
+function getColX(ci,cell,side,v,gridW) {
+  if(ci<COLS_PER_SIDE){
+    return gridW-v.edge-(ci+1)*cell-ci*side;
+  } else {
+    const c=ci-COLS_PER_SIDE;
+    return v.edge+(COLS_PER_SIDE-1-c)*(cell+side);
+  }
+}
+
+function buildGridSVG(cell,side,v,gridH,gridW,borderColor) {
+  const bw='0.3';
+  const bc=borderColor;
+  let d='';
+  const vlines=new Set();
+  vlines.add(0); vlines.add(gridW);
+  vlines.add(v.edge); vlines.add(gridW-v.edge);
+  for(let i=0;i<COLS_PER_SIDE;i++){
+    const colX=v.edge+i*(cell+side);
+    vlines.add(colX); vlines.add(colX+cell);
+  }
+  const centerL=v.edge+COLS_PER_SIDE*cell+(COLS_PER_SIDE-1)*side;
+  const centerR=centerL+v.center;
+  vlines.add(centerL); vlines.add(centerR);
+  for(let i=0;i<COLS_PER_SIDE;i++){
+    const colX=centerR+i*(cell+side);
+    vlines.add(colX); vlines.add(colX+cell);
+  }
+  for(const x of vlines){
+    d+=`<line x1="${x}" y1="0" x2="${x}" y2="${gridH}" stroke="${bc}" stroke-width="${bw}"/>`;
+  }
+  for(let i=0;i<COLS_PER_SIDE;i++){
+    const colX=v.edge+i*(cell+side);
+    for(let r=1;r<=ROWS;r++) d+=`<line x1="${colX}" y1="${r*cell}" x2="${colX+cell}" y2="${r*cell}" stroke="${bc}" stroke-width="${bw}"/>`;
+  }
+  for(let i=0;i<COLS_PER_SIDE;i++){
+    const colX=centerR+i*(cell+side);
+    for(let r=1;r<=ROWS;r++) d+=`<line x1="${colX}" y1="${r*cell}" x2="${colX+cell}" y2="${r*cell}" stroke="${bc}" stroke-width="${bw}"/>`;
+  }
+  d+=`<rect x="0" y="0" width="${gridW}" height="${gridH}" fill="none" stroke="${bc}" stroke-width="${bw}"/>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;top:0;left:0;width:${gridW}mm;height:${gridH}mm;" viewBox="0 0 ${gridW} ${gridH}" preserveAspectRatio="none">${d}</svg>`;
+}
+
+function makeCellDOM(ch,cell,font,borderColor) {
+  const div=document.createElement('div');
+  div.style.cssText=`width:${cell}mm;height:${cell}mm;border-bottom:1px solid ${borderColor};display:flex;align-items:center;justify-content:center;font-size:${font}mm;line-height:1;color:#111;flex-shrink:0;position:relative;overflow:visible;`;
+  if(!ch) return div;
+  const cls=charClass(ch);
+  if(cls==='punctuation'){
+    div.style.fontSize='0';
+    const s=document.createElement('span');s.className='punctuation';s.style.fontSize=`${font}mm`;s.textContent=ch;div.appendChild(s);
+  } else if(cls==='bracket-open'||cls==='bracket-close'||cls==='yakumono'){
+    const s=document.createElement('span');s.className=cls;s.style.fontSize=`${font}mm`;s.textContent=ch;div.appendChild(s);
+  } else if(cls==='rotate-plain'){
+    const s=document.createElement('span');s.style.cssText=`display:inline-block;transform:rotate(90deg);transform-origin:center center;font-size:${font}mm;`;s.textContent=ch;div.appendChild(s);
+  } else {div.textContent=ch;}
+  return div;
+}
+
+function buildPageDOM(columns,v,cell,font,side,borderColor) {
+  const p=PAPER[currentPaper];
+  const {gridH,gridW}=calcAuto(v,p);
+  const page=document.createElement('div');
+  page.style.cssText=`position:relative;width:${p.w}mm;height:${p.h}mm;background:#fff;border:0.5px solid #ccc;margin:0 auto 16px;flex-shrink:0;overflow:hidden;`;
+  const gridEl=document.createElement('div');
+  gridEl.style.cssText=`position:absolute;top:${v.top}mm;left:${v.left}mm;width:${gridW}mm;height:${gridH}mm;display:flex;flex-direction:row-reverse;border-top:1px solid ${borderColor};border-left:1px solid ${borderColor};overflow:visible;`;
+  function addSpacer(w){const d=document.createElement('div');d.style.cssText=`width:${w}mm;height:${gridH}mm;flex-shrink:0;border-right:1px solid ${borderColor};border-bottom:1px solid ${borderColor};`;gridEl.appendChild(d);}
+  function addCharCol(colData){
+    const {chars,hangChars}=colData||{chars:new Array(ROWS).fill(''),hangChars:[]};
+    const col=document.createElement('div');col.style.cssText=`width:${cell}mm;height:${gridH}mm;display:flex;flex-direction:column;border-right:1px solid ${borderColor};flex-shrink:0;position:relative;overflow:visible;`;
+    for(let r=0;r<ROWS;r++) col.appendChild(makeCellDOM(chars[r]||'',cell,font,borderColor));
+    hangChars.forEach((hch,hi)=>{const hc=makeCellDOM(hch,cell,font,borderColor);hc.style.position='absolute';hc.style.top=`${gridH+hi*cell}mm`;hc.style.left='0';hc.style.borderBottom='none';col.appendChild(hc);});
+    gridEl.appendChild(col);
+  }
+  addSpacer(v.edge);
+  for(let c=0;c<COLS_PER_SIDE;c++){addCharCol(columns[c]);if(c<COLS_PER_SIDE-1)addSpacer(side);}
+  addSpacer(v.center);
+  for(let c=0;c<COLS_PER_SIDE;c++){addCharCol(columns[COLS_PER_SIDE+c]);if(c<COLS_PER_SIDE-1)addSpacer(side);}
+  addSpacer(v.edge);
+  page.appendChild(gridEl);
+  return page;
+}
+
+function buildPreview() {
+  const v=getVals(),p=PAPER[currentPaper];
+  const {cell,font,sideAdj}=calcAuto(v,p);
+  const borderColor=LINE_COLORS[lineColorMode];
+  const text=document.getElementById('text').value;
+  const pages=textToPages(text);
+  document.getElementById('info').textContent=`全 ${text.replace(/\n/g,'').length} 文字 / ${pages.length} ページ`;
+  const preview=document.getElementById('preview');preview.innerHTML='';
+  const wrap=document.createElement('div');wrap.style.cssText='display:flex;flex-direction:column;align-items:center;padding:8px;';
+  pages.forEach(cols=>wrap.appendChild(buildPageDOM(cols,v,cell,font,sideAdj,borderColor)));
+  preview.appendChild(wrap);
+}
+
+function buildPrintHTML(v,p,pages) {
+  const {cell,font,gridH,gridW,sideAdj}=calcAuto(v,p);
+  // 印刷用罫線色: white モードのときは #ffffff（印刷されない）
+  const borderColor=LINE_COLORS[lineColorMode];
+  function esc(str){return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+  function charsHTML(columns) {
+    let html='';
+    for(let ci=0;ci<TOTAL_COLS;ci++){
+      const colData=columns[ci]||{chars:new Array(ROWS).fill(''),hangChars:[]};
+      const cx=getColX(ci,cell,sideAdj,v,gridW);
+      colData.chars.forEach((ch,ri)=>{
+        if(!ch) return;
+        const cy=ri*cell;
+        const cls=charClass(ch);const c=esc(ch);
+        const cs=`position:absolute;left:${cx}mm;top:${cy}mm;width:${cell}mm;height:${cell}mm;display:flex;align-items:center;justify-content:center;font-size:${font}mm;line-height:1;color:#111;overflow:hidden;`;
+        if(cls==='punctuation'){
+          html+=`<div style="${cs}font-size:0;"><span style="position:absolute;right:0;top:0;width:50%;height:50%;display:flex;align-items:center;justify-content:center;font-size:${font}mm;">${c}</span></div>`;
+        } else if(cls==='bracket-open'||cls==='bracket-close'||cls==='yakumono'||cls==='rotate-plain'){
+          html+=`<div style="${cs}"><span style="display:inline-block;transform:rotate(90deg);transform-origin:center center;">${c}</span></div>`;
+        } else {
+          html+=`<div style="${cs}">${c}</div>`;
+        }
+      });
+      (colData.hangChars||[]).forEach((hch,hi)=>{
+        const cy=gridH+hi*cell;const cls=charClass(hch);const c=esc(hch);
+        const cs=`position:absolute;left:${cx}mm;top:${cy}mm;width:${cell}mm;height:${cell}mm;display:flex;align-items:center;justify-content:center;font-size:${font}mm;line-height:1;color:#111;`;
+        if(cls==='punctuation'){
+          html+=`<div style="${cs}font-size:0;"><span style="position:absolute;right:0;top:0;width:50%;height:50%;display:flex;align-items:center;justify-content:center;font-size:${font}mm;">${c}</span></div>`;
+        } else {
+          html+=`<div style="${cs}"><span style="display:inline-block;transform:rotate(90deg);transform-origin:center center;">${c}</span></div>`;
+        }
+      });
+    }
+    return html;
+  }
+
+  const pagesHTML=pages.map(columns=>`
+    <div style="width:${p.w}mm;height:${p.h}mm;background:#fff;page-break-after:always;position:relative;overflow:hidden;">
+      <div style="position:absolute;top:${v.top}mm;left:${v.left}mm;width:${gridW}mm;height:${gridH}mm;">
+        ${buildGridSVG(cell,sideAdj,v,gridH,gridW,borderColor)}
+        ${charsHTML(columns)}
+      </div>
+    </div>`).join('');
+
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>原稿用紙</title>
+<style>@page{size:${p.w}mm ${p.h}mm;margin:0;}html,body{margin:0;padding:0;width:${p.w}mm;font-family:serif;}</style>
+</head><body>${pagesHTML}</body></html>`;
+}
+
+function doPrint(){
+  const v=getVals(),p=PAPER[currentPaper];
+  const text=document.getElementById('text').value;
+  const pages=textToPages(text);
+  const html=buildPrintHTML(v,p,pages);
+  const win=window.open('','_blank');
+  win.document.write(html);
+  win.document.close();
+  win.onload=()=>win.print();
+}
+
+updateAuto();
+buildPreview();
+</script>
